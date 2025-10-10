@@ -1,0 +1,31 @@
+# Copy to config.toml and edit.
+[core]
+# Absolute path to project root (used for defaults)
+root_dir = "/opt/reciprocal-intelligence-poc"
+
+# Salt for hashing identifiers (change in production!)
+salt = "CHANGE_ME_LONG_RANDOM_STRING"
+
+[paths]
+# Gammu files backend spool
+inbox_dir = "/var/spool/gammu/inbox"
+outbox_dir = "/var/spool/gammu/outbox"
+sent_dir = "/var/spool/gammu/sent"
+error_dir = "/var/spool/gammu/error"
+
+# SQLite database
+sqlite_path = "/opt/reciprocal-intelligence-poc/offline_agent.db"
+
+[sms]
+# Path to gammu-smsd-inject binary
+inject_bin = "/usr/bin/gammu-smsd-inject"
+# Sender label for confirmations
+sender_label = "QoriAgent"
+
+[policy]
+# Default message TTL in seconds (store-and-forward)
+default_ttl = 86400
+# Max message length processed (safety)
+max_len = 500
+# Languages enabled for templates
+languages = ["es", "en"]

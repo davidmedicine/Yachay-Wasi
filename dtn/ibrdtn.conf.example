@@ -1,0 +1,10 @@
+# Minimal IBR-DTN config (example)
+net.interface = lo
+net.port = 4550
+net.timeout = 10
+
+# Node EID (change per device)
+net.eid = dtn://nodeA/
+
+storage.path = /var/lib/ibrdtn
+logging.level = info

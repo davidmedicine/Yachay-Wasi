@@ -1,0 +1,15 @@
+[Unit]
+Description=Reciprocal Intelligence SMS Bridge (Consent-First)
+After=network.target gammu-smsd.service
+
+[Service]
+Type=simple
+User=offlineagent
+Group=offlineagent
+WorkingDirectory=/opt/reciprocal-intelligence-poc
+ExecStart=/usr/bin/python3 -m src.sms_bridge
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

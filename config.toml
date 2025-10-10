@@ -1,0 +1,19 @@
+[core]
+root_dir = "/opt/reciprocal-intelligence-poc"
+salt = "CHANGE_ME_LONG_RANDOM_STRING"
+
+[paths]
+inbox_dir = "/var/spool/gammu/inbox"
+outbox_dir = "/var/spool/gammu/outbox"
+sent_dir = "/var/spool/gammu/sent"
+error_dir = "/var/spool/gammu/error"
+sqlite_path = "/opt/reciprocal-intelligence-poc/offline_agent.db"
+
+[sms]
+inject_bin = "/usr/bin/gammu-smsd-inject"
+sender_label = "QoriAgent"
+
+[policy]
+default_ttl = 86400
+max_len = 500
+languages = ["es", "en"]
