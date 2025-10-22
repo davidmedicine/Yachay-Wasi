@@ -1,0 +1,29 @@
+[core]
+# Salt used to hash MSISDNs. CHANGE THIS PER DEPLOYMENT (keep secret).
+salt = "CHANGE_ME_USE_A_LONG_RANDOM_STRING"
+
+[paths]
+# SQLite database file (local/offline)
+sqlite_path = "/var/lib/yachay-wasi/yw.sqlite"
+# Gammu inbox directory (where smsd drops inbound SMS files)
+inbox_dir = "/var/spool/gammu/inbox"
+
+[sms]
+# Path to gammu-smsd-inject
+inject_bin = "/usr/bin/gammu-smsd-inject"
+# Label used as sender fingerprint in logs (not a phone number)
+sender_label = "yachay-wasi"
+
+[policy]
+# Default TTL in seconds for message records
+default_ttl = 604800  # 7 days
+
+[topics]
+salud = "Alertas de salud del puesto local"
+precio = "Precios justos de ferias y compradores"
+comunidad = "Reuniones y decisiones comunitarias"
+
+[phonebook]
+# Steward-managed CSV mapping: msisdn_hash,msisdn (kept off-DB)
+# If missing, broadcast will skip unresolved recipients.
+mapping_csv = "/opt/yachay-wasi/phonebook.csv"

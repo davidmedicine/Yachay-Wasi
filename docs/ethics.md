@@ -1,11 +1,18 @@
-# Ethics: Consent-First, Community-Governed
+# Ética: FPIC + Privacidad + Gobernanza Comunitaria
 
-This PoC follows **CARE Principles** and **UNESCO AI Ethics (2021)**:
+Principios
+- FPIC (Consentimiento Libre, Previo e Informado) comunitario antes de operar.
+- Participación individual por suscripción (SALUD, PRECIO, COMUNIDAD) y revocación (STOP).
+- Mínimos datos: ningún MSISDN en la BD (solo hash salado), TTL de mensajes, sin analítica remota.
+- Steward local: control de phonebook.csv (fuera de la BD, cifrado).
+- No vigilancia: sin rastreo, sin nubes, sin scraping.
 
-- **Consent & Revocation:** Individuals can grant, deny, or revoke at any time (SMS commands: `CONSENT YES`, `CONSENT NO`, `REVOKE`).
-- **Local Control:** Identifiers are salted & hashed. Keep plaintext outside the DB whenever possible.
-- **Data Minimization:** No unnecessary collection; short, human-readable logs; TTL for messages.
-- **No Surveillance:** No background scraping, no location tracking, no remote analytics.
-- **Multilayer Governance:** Add community (ayllu) approval steps before deployments.
+Procedimiento
+- Asamblea comunitaria -> registrar en CLI:
+  yachay-wasi community-consent --status granted --reason "Acta/fecha"
+- Las personas se suscriben enviando SALUD/PRECIO/COMUNIDAD. Si no hay FPIC, el sistema no acepta suscripción.
+- Revocación individual con STOP (se registra evento de revocación).
 
-Add your CLPI/FPIC procedures here (who, how, when), and include bilingual (ES/EN + Quechua) versions of consent texts.
+Cumplimiento
+- Alineado a CARE Principles y UNESCO AI Ethics (2021).
+- FPIC documentado y auditable (registro CLI y acta).

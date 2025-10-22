@@ -1,12 +1,12 @@
 [Unit]
-Description=Reciprocal Intelligence SMS Bridge (Consent-First)
-After=network.target gammu-smsd.service
+Description=Yachay Wasi: Community Information Service (SMS Alerts)
+After=gammu-smsd.service
 
 [Service]
 Type=simple
 User=offlineagent
 Group=offlineagent
-WorkingDirectory=/opt/reciprocal-intelligence-poc
+WorkingDirectory=/opt/yachay-wasi
 ExecStart=/usr/bin/python3 -m src.sms_bridge
 Restart=on-failure
 RestartSec=5

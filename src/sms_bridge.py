@@ -3,28 +3,27 @@ from pathlib import Path
 
 from .config import load_config
 from .utils import normalize_msisdn, hash_identifier
-from .db import enqueue_message, log_action, update_message_state
-from .consent import check_consent, set_consent
+from .db import (
+    enqueue_message,
+    log_action,
+    update_message_state,
+    get_or_create_subscription,
+    revoke_all_subscriptions,
+    add_consent_event,
+    latest_community_consent,
+)
 from .queue import send_sms_via_gammu
 
-WELCOME = {
-    "es": "Gracias. Tu consentimiento está registrado. Responde REVOKE para retirarlo en cualquier momento.",
-    "en": "Thanks. Your consent is recorded. Reply REVOKE to withdraw at any time.",
-}
+CONFIRM_TPL = "Gracias. Recibirás alertas de [{TOPIC_UP}]. Tu código es {CODE}. Di STOP para salir."
+ALREADY_TPL = "Ya estás suscrito a [{TOPIC_UP}]. Tu código es {CODE}. Di STOP para salir."
+STOP_GENERIC = "Has salido. Gracias por usar Yachay Wasi."
+STOP_LIST_TPL = "Has salido de {TOPICS}. Gracias por usar Yachay Wasi."
+NO_COMMUNITY_CONSENT = "El servicio está inactivo hasta el consentimiento de la comunidad. Consulta con la persona encargada."
 
-HELP = {
-    "es": "Comandos: CONSENT YES/NO, REVOKE, HELP.",
-    "en": "Commands: CONSENT YES/NO, REVOKE, HELP.",
-}
-
-REVOKED = {
-    "es": "Se ha revocado tu consentimiento. No procesaremos más mensajes.",
-    "en": "Your consent has been revoked. We will no longer process messages.",
-}
-
-BLOCKED = {
-    "es": "No hay consentimiento. Envía CONSENT YES para participar o HELP para ayuda.",
-    "en": "No consent on file. Send CONSENT YES to participate or HELP for help.",
+TOPIC_KEYWORDS = {
+    "salud": "SALUD",
+    "precio": "PRECIO",
+    "comunidad": "COMUNIDAD",
 }
 
 
@@ -37,10 +36,23 @@ def parse_sms_file(path: Path):
                 sender = line.split(":", 1)[1].strip()
             elif line.startswith("Text: "):
                 text_lines.append(line.split(":", 1)[1].strip())
-            elif line.strip() and not any(line.startswith(prefix) for prefix in ("From:", "To:", "IMSI:", "SMSC:", "Sent:", "Text:")):
+            elif line.strip() and not any(
+                line.startswith(prefix)
+                for prefix in ("From:", "To:", "IMSI:", "SMSC:", "Sent:", "Text:")
+            ):
                 text_lines.append(line.strip())
     body = " ".join(text_lines).strip()
     return sender, body
+
+
+def _join_es_topics(topics):
+    # Convert to uppercase labels and join with commas and 'y'
+    labels = [TOPIC_KEYWORDS.get(t, t).upper() for t in topics]
+    if not labels:
+        return ""
+    if len(labels) == 1:
+        return labels[0]
+    return ", ".join(labels[:-1]) + " y " + labels[-1]
 
 
 def main():
@@ -48,7 +60,7 @@ def main():
     inbox = Path(cfg["paths"]["inbox_dir"])
     poll_interval = 2
 
-    print(f"[bridge] polling inbox: {inbox}")
+    print(f"[yachay-wasi] polling inbox: {inbox}")
     inbox.mkdir(parents=True, exist_ok=True)
 
     seen = set()
@@ -69,28 +81,36 @@ def main():
 
                 sender_hash = hash_identifier(msisdn)
                 message_id = enqueue_message("in", "sms", sender_hash, None, body, cfg["policy"]["default_ttl"])
-                log_action(message_id, "inbound", "parsed", notes=body[:120])
+                log_action(message_id, "inbound", "parsed", notes=body[:160])
 
                 lower = body.lower().strip()
                 reply = None
-                if lower.startswith("consent"):
-                    if "yes" in lower or "si" in lower or "sí" in lower or "grant" in lower:
-                        set_consent(msisdn, "granted")
-                        reply = WELCOME["es"]
-                    elif "no" in lower or "deny" in lower:
-                        set_consent(msisdn, "denied")
-                        reply = BLOCKED["es"]
-                elif lower.startswith("revoke"):
-                    set_consent(msisdn, "revoked")
-                    reply = REVOKED["es"]
-                elif lower.startswith("help"):
-                    reply = HELP["es"]
-                else:
-                    status = check_consent(msisdn)
-                    if status != "granted":
-                        reply = BLOCKED["es"]
+
+                if lower in TOPIC_KEYWORDS:
+                    # Check community consent gate
+                    cc = latest_community_consent()
+                    if cc != "granted":
+                        reply = NO_COMMUNITY_CONSENT
                     else:
-                        reply = "Recibido. Gracias por tu mensaje."
+                        topic = lower
+                        created, code = get_or_create_subscription(sender_hash, topic)
+                        if created:
+                            reply = CONFIRM_TPL.format(TOPIC_UP=TOPIC_KEYWORDS[topic], CODE=code)
+                        else:
+                            reply = ALREADY_TPL.format(TOPIC_UP=TOPIC_KEYWORDS[topic], CODE=code)
+
+                elif lower == "stop":
+                    topics = revoke_all_subscriptions(sender_hash)
+                    if topics:
+                        add_consent_event(sender_hash, "revoked")
+                        reply_topics = _join_es_topics(sorted(set(topics)))
+                        reply = STOP_LIST_TPL.format(TOPICS=reply_topics)
+                    else:
+                        reply = STOP_GENERIC
+
+                else:
+                    # Ignore everything else (no chat echo)
+                    reply = None
 
                 if reply:
                     ok = send_sms_via_gammu(msisdn, reply)
