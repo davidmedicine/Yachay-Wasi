@@ -1,122 +1,81 @@
-Yachay-Wasi — Mensajero de IA Offline Gobernado por la Comunidad (SMS)
+Yachay-Wasi — Community-Governed Offline AI Messenger (SMS)
 
-Vista previa de investigación (v0.1)
+Research Preview (v0.1)
 
-Yachay-Wasi es un sistema de conocimiento y alertas por SMS, diseñado como offline-first, pensado para contextos rurales donde el acceso a internet es poco confiable. Funciona de manera local (por ejemplo, en una Raspberry Pi) y, de forma opcional, puede ofrecer respuestas asistidas por IA usando un LLM local, siempre con consentimiento y gobernanza comunitaria.
+Yachay-Wasi is an SMS-based knowledge and alerts system designed as offline-first for rural contexts where internet access is unreliable. It runs locally (for example, on a Raspberry Pi) and can optionally provide AI-assisted responses using a local LLM, always with community consent and governance.
 
-Este repositorio forma parte de Qori Labs (Laboratorio de Tecnología de Interés Público): construimos “Capas Soberanas” donde la conectividad, la cognición (IA local) y la gobernanza están diseñadas para el control local.
+This repository is part of Qori Labs (Public Interest Technology Lab): we build “Sovereign Layers” where connectivity, cognition (local AI), and governance are designed for local control.
 
-Qué hace
-1) Consultas de conocimiento por SMS (offline)
+What it does
+Knowledge queries by SMS (offline)
 
-Ejemplos:
+Examples:
 
-PRECIO papa → precios de referencia locales (desde una base de conocimiento curada por custodios)
+PRECIO papa → local reference prices (from a knowledge base curated by custodians)
+CLIMA → local agronomic advice (not a weather forecast)
+HISTORIA pachamama → approved cultural stories (if enabled)
+Community alerts (SMS broadcast)
 
-CLIMA → consejos agronómicos locales (no es un pronóstico del tiempo)
-
-HISTORIA pachamama → relatos culturales aprobados (si está habilitado)
-
-2) Alertas comunitarias (difusión por SMS)
-
-Los temas pueden incluir:
+Topics may include:
 
 SALUD, COMUNIDAD, PRECIO (configurable)
+Optional local AI responses (only if enabled and authorized)
+Runs a small local model through llama.cpp (no cloud)
+Keeps responses short (SMS-friendly)
+Governance and consent (core requirement)
 
-3) Respuestas opcionales con IA local (solo si está habilitado y autorizado)
+Yachay-Wasi is designed to operate under local authority.
 
-Ejecuta un modelo local pequeño mediante llama.cpp (sin nube)
+Separate consent layers:
 
-Mantiene las respuestas cortas (aptas para SMS)
+Service consent (SMS system)
+AI consent (local inference features)
 
-Gobernanza y consentimiento (requisito central)
+STOP revokes subscriptions (and can be extended to revoke AI access as well).
 
-Yachay-Wasi está diseñado para operar bajo autoridad local:
+Governance is enforceable locally through custodial tools and offline control.
 
-Consentimientos separados:
-
-Consentimiento del servicio (sistema SMS)
-
-Consentimiento de IA (funciones de inferencia local)
-
-STOP revoca suscripciones (y puede extenderse para revocar el acceso a IA).
-
-La gobernanza es aplicable localmente (herramientas de custodia + control offline).
-
-Privacidad por diseño (offline-first)
-
-Sin nube por defecto.
-
-No se requiere telemetría externa.
-
-El almacenamiento puede configurarse para minimizar la retención de datos.
-
-Los identificadores telefónicos pueden ser hasheados; el mapeo offline puede quedar en manos de los custodios.
-
-Cómo funciona (arquitectura)
-
-Gammu SMSD escribe los SMS entrantes en un spool local.
-
-sms_bridge analiza los mensajes, aplica las reglas de consentimiento y enruta las solicitudes.
-
-La base de conocimiento local proporciona contenido de referencia aprobado (archivos CSV/YAML).
-
-Si la IA está habilitada y autorizada, el puente llama al LLM local para generar una respuesta corta.
-
-Las respuestas se devuelven por SMS.
-
-Todo se ejecuta en el dispositivo local.
-
-Requisitos
-
-Raspberry Pi 4 (4GB recomendado; 2GB mínimo)
-
-Módem GSM compatible con Gammu
-
+Privacy by design (offline-first)
+No cloud by default
+No external telemetry required
+Storage can be configured to minimize data retention
+Phone identifiers can be hashed; offline identity mapping may remain in the hands of local custodians
+How it works (architecture)
+Gammu SMSD writes incoming SMS messages to a local spool
+sms_bridge parses messages, applies consent rules, and routes requests
+The local knowledge base provides approved reference content (CSV/YAML files)
+If AI is enabled and authorized, the bridge calls the local LLM to generate a short response
+Replies are sent back by SMS
+Everything runs on the local device
+Requirements
+Raspberry Pi 4 (4GB recommended; 2GB minimum)
+GSM modem compatible with Gammu
 Linux, Python 3, SQLite, Gammu/SMSD
+llama.cpp + a small quantized model (for example, TinyLlama q4) if AI mode is used
+Quick start (high level)
+Setup
 
-llama.cpp + un modelo pequeño cuantizado (por ejemplo, TinyLlama q4) si se usa el modo IA
+Copy config.toml.example to config.toml and define:
 
-Inicio rápido (alto nivel)
-Configurar
-
-Copiar config.toml.example → config.toml y definir:
-
-rutas (sqlite, directorio de entrada)
-
-ubicación del mapeo de la agenda telefónica (opcional)
-
-configuración de IA (desactivada por defecto)
-
-Inicializar
+paths (SQLite, inbox directory)
+phonebook mapping location (optional)
+AI settings (disabled by default)
+Initialize
 python3 -m src.cli init-db
-
-
-Configurar consentimiento (ejemplo):
-
-yachay-wasi consent --status granted --reason "Asamblea YYYY-MM-DD"
-
-
-(Opcional) Habilitar IA solo después de un consentimiento separado:
-
-yachay-wasi ai-consent --status granted --reason "Acta IA YYYY-MM-DD"
+Set service consent (example)
+yachay-wasi consent --status granted --reason "Assembly YYYY-MM-DD"
+Optional: enable AI only after separate consent
+yachay-wasi ai-consent --status granted --reason "AI Record YYYY-MM-DD"
 yachay-wasi ai --enable
-
-
-Ejecutar:
-
+Run
 python3 -m src.sms_bridge
+Safety notes
+Use public, permitted, or synthetic datasets for demonstrations
+Avoid sensitive personal content
+Health-related messages should be educational and refer users to local health workers
+This is a research prototype; validate locally before field use
+License
 
-Notas de seguridad
+MIT. (Community stewardship remains a governance norm even when the code is open.)
 
-Usar conjuntos de datos públicos, permitidos o sintéticos para demostraciones.
-
-Evitar contenido personal sensible.
-
-Los mensajes de salud deben ser educativos y derivar a trabajadores de salud locales.
-
-Este es un prototipo de investigación; validar localmente antes de su uso en campo.
-
-Licencia
-
-MIT. (La custodia comunitaria es una norma de gobernanza incluso cuando el código es abierto.)
+If you want, I can also turn this into a cleaner README-style version for GitHub.
